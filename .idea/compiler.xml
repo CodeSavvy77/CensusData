@@ -6,11 +6,16 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="newproject" />
+        <module name="CensusData" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="newproject" target="16" />
+      <module name="CensusData" target="16" />
     </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="CensusData" options="--add-exports java.base/jdk.internal.icu.impl=ALL-UNNAMED" />
+    </option>
   </component>
 </project>
