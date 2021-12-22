@@ -21,21 +21,33 @@ public class CheckCity2 {
     private static WebDriver driver;
     public String ActualState;
     public String ActualCity;
-    public String PinCode;
+//    public String PinCode;
     public String State;
     public String City;
+    public String QuickFacts = "";
 
     public static void main(String[] args) throws Exception {
         System.setProperty("webdriver.chrome.driver", "C:\\chromedriver.exe");
 
-        //create object of chrome options
+//        create object of chrome options
         ChromeOptions options = new ChromeOptions();
 
-        //add the headless argument
+//        add the headless argument
         options.addArguments("headless");
 
-        //pass the options parameter in the Chrome driver declaration
+//        pass the options parameter in the Chrome driver declaration
         driver = new ChromeDriver(options);
+
+        //set the path of the Gecko driver as per the location on local machine
+//        System.setProperty("webdriver.gecko.driver", "C:\\Users\\Prefme_Matrix\\OneDrive\\Documents\\geckodriver.exe");
+//
+//        //Set Firefox Headless mode as TRUE
+//        FirefoxOptions options = new FirefoxOptions();
+//        options.setHeadless(true);
+//
+//        //pass the options parameter in the Firefox driver declaration
+//        driver = new FirefoxDriver(options);
+
 
 //        driver = new ChromeDriver();
 
@@ -135,7 +147,7 @@ public class CheckCity2 {
                 }
                 ActualCity = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/div[1]/h1/span[1]")).getText();
 
-                if (!ActualState.contains(State)) {
+                if (!ActualState.contains(State) && !ActualState.contains("45") && !ActualState.contains("46") && !ActualState.contains("47") && !ActualState.contains("48")) {
                     WriteExcelFile.print("check " + City);
                 } else {
                     WriteExcelFile.print(City + " is correct");
@@ -153,20 +165,32 @@ public class CheckCity2 {
 //                System.out.println(ActualState);
                 WriteExcelFile.print("State is different");
 //                WriteExcelFile.print(State + " is different");
-            } else if (ActualState.contains("80") || ActualState.contains("81") || ActualState.contains("82") || ActualState.contains("83") || ActualState.contains("84") || ActualState.contains("85") || ActualState.contains(State)) {
+            } else if (ActualState.contains("45") || ActualState.contains("46") || ActualState.contains("47") || ActualState.contains("48")|| ActualState.contains(State)) {
                 if (ActualCity.contains(City)) {
 //                    System.out.println(City + " is correct");
                     WriteExcelFile.print(City + " is correct");
                 } else {
+                    try {
+                        QuickFacts = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[7]/div[1]/span/span[1]")).getText();
+                    } catch (Exception e) {
+                        driver.findElement(By.xpath("//*[@id=\"sb_cb50\"]")).click();
+                    }
+                    if (QuickFacts.contains(City)) {
+                            WriteExcelFile.print(City + " is correct");
+                        } else {
 //                    System.out.println(City + " - City name is different");
-                    WriteExcelFile.print(City + " - City name is different");
+                        WriteExcelFile.print(City + " - City name is different");
+                    }
                 }
             } else {
 //                System.out.println(City + " has incorrect state");
                 WriteExcelFile.print(City + " has incorrect state");
                 driver.findElement(By.cssSelector("#sb_cb50")).click();
             }
-            driver.findElement(By.cssSelector("#sb_cb50")).click();
+            try {
+                driver.findElement(By.cssSelector("#sb_cb50")).click();
+            } catch (Exception e) {
+            }
         }
 
         driver.findElement(By.cssSelector("#sb_cb50")).click();
