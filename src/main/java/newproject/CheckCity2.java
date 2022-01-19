@@ -14,7 +14,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.concurrent.TimeUnit;
 
 public class CheckCity2 {
 
@@ -52,7 +51,7 @@ public class CheckCity2 {
 //        driver = new ChromeDriver();
 
         driver.manage().window().maximize();
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+//        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 
         String baseUrl = "https://maps.google.com/";
         driver.get(baseUrl);
@@ -136,6 +135,32 @@ public class CheckCity2 {
                     ActualState = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/h2/span")).getText();
                 } catch (Exception exception) {
                     WriteExcelFile.print("check " + City);
+//                    try {
+//                        driver.findElement(By.cssSelector("#sb_cb50")).click();
+//                    } catch (Exception exception1) {
+//                        driver.findElement(By.xpath("//*[@id=\"omnibox-directions\"]/div/div[2]/div/button/div")).click();
+//                    }
+//
+//                    //Search for city name and state
+//                    driver.findElement(By.xpath("//input[@id='searchboxinput']")).click();
+//                    driver.findElement(By.xpath("//input[@id='searchboxinput']")).sendKeys(City + " " + State);
+//
+//                    //Getting all results for city search
+//                    List<WebElement> listOfElements = driver.findElements(By.className("ZHeE1b ZHeE1b-tPcied-dkl3Ye"));
+//                    for (WebElement k: listOfElements) {
+//                        String StateName = k.getText();
+//                        if (StateName.contains(State)){
+//                            k.click();
+//                            ActualCity = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/div[1]/h1/span[1]")).getText();
+//                            if (ActualCity.contains(City)) {
+////                    System.out.println(City + " is correct");
+//                                WriteExcelFile.print(City + " is correct");
+//                            } else {
+//
+//                            }
+//                        }
+//                    }
+
 //                    new WebDriverWait(driver, 20).until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"omnibox-directions\"]/div/div[2]/div/button/div"))).click();
 //                    driver.findElement(By.xpath("//*[@id=\"omnibox-directions\"]/div/div[2]/div/button/div")).click();
                     try {
@@ -147,7 +172,7 @@ public class CheckCity2 {
                 }
                 ActualCity = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/div[1]/h1/span[1]")).getText();
 
-                if (!ActualState.contains(State) && !ActualState.contains("45") && !ActualState.contains("46") && !ActualState.contains("47") && !ActualState.contains("48")) {
+                if (!ActualState.contains(State) && !ActualState.contains("14") ) {
                     WriteExcelFile.print("check " + City);
                 } else {
                     WriteExcelFile.print(City + " is correct");
@@ -165,7 +190,7 @@ public class CheckCity2 {
 //                System.out.println(ActualState);
                 WriteExcelFile.print("State is different");
 //                WriteExcelFile.print(State + " is different");
-            } else if (ActualState.contains("45") || ActualState.contains("46") || ActualState.contains("47") || ActualState.contains("48")|| ActualState.contains(State)) {
+            } else if (ActualState.contains("14") || ActualState.contains(State)) {
                 if (ActualCity.contains(City)) {
 //                    System.out.println(City + " is correct");
                     WriteExcelFile.print(City + " is correct");
@@ -207,11 +232,11 @@ public class CheckCity2 {
 
         //Prepare the path of excel file
 
-        String filePath = "C:\\Users\\Prefme_Matrix\\OneDrive\\Documents";
+        String filePath = "C:\\Users\\Prefme_Matrix\\IdeaProjects\\untitled\\src\\main\\java\\excelExportAndFileIO";
 
         //Call read file method of the class to read data
 
-        objExcelFile.readExcel(filePath, "ExportExcel.xlsx", "Sheet1");
+        objExcelFile.readExcel(filePath, "ImportExcel.xlsx", "Sheet1");
 
     }
 
