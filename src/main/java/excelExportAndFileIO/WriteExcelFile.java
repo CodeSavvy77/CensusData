@@ -14,104 +14,74 @@ import java.io.IOException;
 
 public class WriteExcelFile {
 
-    public static void writeExcel(String filePath, String fileName, String sheetName, String dataToWrite) throws IOException{
+    /**
+     * This method is used to write data to an Excel file.
+     *
+     * @param filePath    The file path where the Excel file is located.
+     * @param fileName    The name of the Excel file.
+     * @param sheetName   The name of the sheet where data needs to be written.
+     * @param dataToWrite The data to be written to the Excel file.
+     * @throws IOException If there is an I/O error.
+     */
+    public static void writeExcel(String filePath, String fileName, String sheetName, String dataToWrite) throws IOException {
 
-        //Create an object of File class to open xlsx file
+        // Create an object of File class to open xlsx/xls file
+        File file = new File(filePath + "\\" + fileName);
 
-        File file =    new File(filePath+"\\"+fileName);
-
-        //Create an object of FileInputStream class to read excel file
-
+        // Create an object of FileInputStream class to read excel file
         FileInputStream inputStream = new FileInputStream(file);
+        Workbook workbook = null;
 
-        Workbook Workbook = null;
-
-        //Find the file extension by splitting  file name in substring and getting only extension name
-
+        // Find the file extension by splitting file name in substring and getting only extension name
         String fileExtensionName = fileName.substring(fileName.indexOf("."));
 
-        //Check condition if the file is xlsx file
-
-        if(fileExtensionName.equals(".xlsx")){
-
-            //If it is xlsx file then create object of XSSFWorkbook class
-
-            Workbook = new XSSFWorkbook(inputStream);
-
+        // Check if the file is xlsx or xls and create appropriate workbook object
+        if (fileExtensionName.equals(".xlsx")) {
+            workbook = new XSSFWorkbook(inputStream);
+        } else if (fileExtensionName.equals(".xls")) {
+            workbook = new HSSFWorkbook(inputStream);
         }
 
-        //Check condition if the file is xls file
+        // Read excel sheet by sheet name
+        Sheet sheet = workbook.getSheet(sheetName);
 
-        else if(fileExtensionName.equals(".xls")){
+        // Get the current count of rows in excel file
+        int rowCount = sheet.getLastRowNum() - sheet.getFirstRowNum();
 
-            //If it is xls file then create object of XSSFWorkbook class
-
-            Workbook = new HSSFWorkbook(inputStream);
-
-        }
-
-        //Read excel sheet by sheet name
-
-        Sheet sheet = Workbook.getSheet(sheetName);
-
-        //Get the current count of rows in excel file
-
-        int rowCount = sheet.getLastRowNum()-sheet.getFirstRowNum();
-
-        //Get the first row from the sheet
-
+        // Get the first row from the sheet
         Row row = sheet.getRow(0);
 
-        //Create a new row and append it at last of sheet
+        // Create a new row and append it at the end of the sheet
+        Row newRow = sheet.createRow(rowCount + 1);
 
-        Row newRow = sheet.createRow(rowCount+1);
+        // Fill data in the new row
+        Cell cell = newRow.createCell(0);
+        cell.setCellValue(dataToWrite);
 
-        //Create a loop over the cell of newly created Row
-
-        for(int j = 0; j < row.getLastCellNum(); j++){
-
-            //Fill data in row
-
-            Cell cell = newRow.createCell(j);
-
-            cell.setCellValue(dataToWrite);
-
-        }
-
-        //Close input stream
-
+        // Close input stream
         inputStream.close();
 
-        //Create an object of FileOutputStream class to create write data in excel file
-
+        // Create an object of FileOutputStream class to write data in excel file
         FileOutputStream outputStream = new FileOutputStream(file);
 
-        //write data in the excel file
+        // Write data in the excel file
+        workbook.write(outputStream);
 
-        Workbook.write(outputStream);
-
-        //close output stream
-
+        // Close output stream
         outputStream.close();
-
     }
 
-    public static void print(String s) throws IOException{
-
+    /**
+     * This method is used to print a string and write it to an Excel file.
+     *
+     * @param s The string to be printed and written to the Excel file.
+     * @throws IOException If there is an I/O error.
+     */
+    public static void print(String s) throws IOException {
+        // Print the string to the console
         System.out.println(s);
 
-        //Create an array with the data in the same order in which you expect to be filled in excel file
-
-        String valueToWrite = s;
-
-        //Create an object of current class
-
-        WriteExcelFile objExcelFile = new WriteExcelFile();
-
-        //Write the file using file name, sheet name and the data to be filled
-
-        objExcelFile.writeExcel("C:\\Users\\Prefme_Matrix\\IdeaProjects\\untitled\\src\\main\\java\\excelExportAndFileIO","ExportExcel.xlsx","Sheet1",valueToWrite);
-
+        // Write the string to the Excel file
+        writeExcel("C:\\Users\\Prefme_Matrix\\IdeaProjects\\untitled\\src\\main\\java\\excelExportAndFileIO", "ExportExcel.xlsx", "Sheet1", s);
     }
-
 }
