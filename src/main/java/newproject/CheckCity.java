@@ -14,166 +14,124 @@ import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class CheckCity {
 
     private static WebDriver driver;
 
-    public static void main(String[] args) throws Exception {
-        System.setProperty("webdriver.chrome.driver","C:\\chromedriver.exe");
+    public static void main(String[] args) {
+        try {
+            // Set up the WebDriver
+            setupDriver();
+            // Open Google Maps
+            driver.get("https://maps.google.com/");
+            // Start the process of reading from the Excel file and checking city/state
+            getState();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // Ensure the WebDriver is properly closed
+            if (driver != null) {
+                driver.quit();
+            }
+        }
+    }
 
-        //create object of chrome options
+    // Method to set up the WebDriver with Chrome options
+    private static void setupDriver() {
+        System.setProperty("webdriver.chrome.driver", "C:\\chromedriver.exe");
         ChromeOptions options = new ChromeOptions();
-
-        //add the headless argument
         options.addArguments("headless");
-
-        //pass the options parameter in the Chrome driver declaration
         driver = new ChromeDriver(options);
-
         driver.manage().window().maximize();
         driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-
-        String baseUrl = "https://maps.google.com/";
-        driver.get(baseUrl);
-
-        getState();
-
-        driver.quit();
     }
 
-    public void readExcel(String filePath,String fileName,String sheetName) throws Exception {
-
-        //Create an object of File class to open xlsx file
-
-        File file =    new File(filePath+"\\"+fileName);
-
-        //Create an object of FileInputStream class to read excel file
-
+    // Method to read data from an Excel file
+    private void readExcel(String filePath, String fileName, String sheetName) throws IOException {
+        File file = new File(filePath + "\\" + fileName);
         FileInputStream inputStream = new FileInputStream(file);
 
-        Workbook Workbook = null;
-
-        //Find the file extension by splitting file name in substring  and getting only extension name
-
+        Workbook workbook = null;
         String fileExtensionName = fileName.substring(fileName.indexOf("."));
-
-        //Check condition if the file is xlsx file
-
-        if(fileExtensionName.equals(".xlsx")){
-
-            //If it is xlsx file then create object of XSSFWorkbook class
-
-            Workbook = new XSSFWorkbook(inputStream);
-
+        if (fileExtensionName.equals(".xlsx")) {
+            workbook = new XSSFWorkbook(inputStream);
+        } else if (fileExtensionName.equals(".xls")) {
+            workbook = new HSSFWorkbook(inputStream);
         }
 
-        //Check condition if the file is xls file
+        // If the workbook was successfully created, process the sheet
+        if (workbook != null) {
+            Sheet sheet = workbook.getSheet(sheetName);
+            int rowCount = sheet.getLastRowNum() - sheet.getFirstRowNum();
 
-        else if(fileExtensionName.equals(".xls")){
+            // Iterate through the rows of the sheet
+            for (int i = 0; i <= rowCount; i++) {
+                Row row = sheet.getRow(i);
+                String state = row.getCell(0).getStringCellValue();
+                String city = row.getCell(1).getStringCellValue();
+                searchCity(city, state);
+            }
 
-            //If it is xls file then create object of HSSFWorkbook class
-
-            Workbook = new HSSFWorkbook(inputStream);
-
+            workbook.close();
         }
+        inputStream.close();
+    }
 
-        //Read sheet inside the workbook by its name
+    // Method to search for a city and state on Google Maps
+    private void searchCity(String city, String state) throws InterruptedException {
+        driver.findElement(By.xpath("//input[@id='searchboxinput']")).click();
+        driver.findElement(By.xpath("//input[@id='searchboxinput']")).sendKeys(city + " " + state);
+        driver.findElement(By.xpath("//input[@id='searchboxinput']")).sendKeys(Keys.ENTER);
+        Thread.sleep(2000); // Wait for the search results to load
 
-        Sheet Sheet = Workbook.getSheet(sheetName);
+        try {
+            String actualState = driver.findElement(By.xpath("/html[1]/body[1]/div[3]/div[9]/div[8]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/h2[2]/span[1]")).getText();
+            String actualCity = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/div[1]/h1/span[1]")).getText();
+            validateCityAndState(city, state, actualCity, actualState, null);
+        } catch (Exception e) {
+            handleSearchException(city, state);
+        }
+    }
 
-        //Find number of rows in excel file
+    // Method to validate the city and state obtained from Google Maps against the expected values
+    private void validateCityAndState(String city, String state, String actualCity, String actualState, String pinCode) {
+        if (actualState != null && !actualState.contains(state)) {
+            WriteExcelFile.print(state + " is different");
+        } else if (pinCode != null && pinCode.contains("79") && actualCity.contains(city)) {
+            WriteExcelFile.print(city + " is correct");
+        } else {
+            WriteExcelFile.print(city + " - City name is different");
+        }
+    }
 
-        int rowCount = Sheet.getLastRowNum()-Sheet.getFirstRowNum();
+    // Method to handle exceptions that occur during the search
+    private void handleSearchException(String city, String state) {
+        try {
+            String pinCode = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/h2/span")).getText();
+            String actualCity = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/div[1]/h1/span[1]")).getText();
+            validateCityAndState(city, state, actualCity, null, pinCode);
+        } catch (Exception e) {
+            WriteExcelFile.print(city + " has incorrect state");
+            clickClearSearchBox();
+        }
+    }
 
-        //Create a loop over all the rows of excel file to read it
-
-        for (int i = 0; i < rowCount+1; i++) {
-
-            Row row = Sheet.getRow(i);
-
-            //Create a loop to print cell values in a row
-
-
-            //Print Excel data in console
-            int j = 0;
-
-            String State = row.getCell(j).getStringCellValue();
-            String City = row.getCell(j + 1).getStringCellValue();
-
-            driver.findElement(By.xpath("//input[@id='searchboxinput']")).click();
-            driver.findElement(By.xpath("//input[@id='searchboxinput']")).sendKeys(City + " " + State);
-            driver.findElement(By.xpath("//input[@id='searchboxinput']")).sendKeys(Keys.ENTER);
-            Thread.sleep(2000);
-
-            String ActualState = null;
-            String PinCode = null;
-            String ActualCity = null;
-
-
-            try {
-                ActualState = driver.findElement(By.xpath("/html[1]/body[1]/div[3]/div[9]/div[8]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/h2[2]/span[1]")).getText();
-                ActualCity = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/div[1]/h1/span[1]")).getText();
-            } catch (Exception e) {
-                try {
-                    PinCode = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/h2/span")).getText();
-                    ActualCity = driver.findElement(By.xpath("//*[@id=\"pane\"]/div/div[1]/div/div/div[2]/div[1]/div[1]/div[1]/h1/span[1]")).getText();
-                } catch (Exception exception) {
-                    System.out.println("check " + City);
-                    try{
-                        driver.findElement(By.cssSelector("#sb_cb50")).click();
-                    } catch (Exception exception1){
-                        driver.findElement(By.xpath("//*[@id=\"omnibox-directions\"]/div/div[2]/div/button/div")).click();
-                        continue;
-                    }
-                    continue;
-                }
-            }
-
-            try {
-                if (!ActualState.contains(State)) {
-//                    System.out.println("Expected State: " + State);
-//                    System.out.println(ActualState);
-//                    System.out.println(State + " is diffrent");
-                    WriteExcelFile.print(State + " is diffrent");
-                }
-            } catch (Exception e) {
-                if (PinCode.contains("79")) {
-                    if (ActualCity.contains(City)){
-//                        System.out.println(City + " is correct");
-                        WriteExcelFile.print(City + " is correct");
-                    } else {
-//                        System.out.println(City + " - City name is different");
-                        WriteExcelFile.print(City + " - City name is different");                    }
-                } else {
-//                    System.out.println(City + " has incorrect state");
-                    WriteExcelFile.print(City + " has incorrect state");
-                }
-            }
-
-
+    // Method to clear the search box in Google Maps
+    private void clickClearSearchBox() {
+        try {
             driver.findElement(By.cssSelector("#sb_cb50")).click();
+        } catch (Exception e) {
+            driver.findElement(By.xpath("//*[@id=\"omnibox-directions\"]/div/div[2]/div/button/div")).click();
         }
-
     }
 
-    //Main function is calling readExcel function to read data from excel file
-
+    // Method to initiate the process of reading from the Excel file and validating cities/states
     public static void getState() throws Exception {
-
-        //Create an object of ReadExcelFile class
-
         CheckCity objExcelFile = new CheckCity();
-
-        //Prepare the path of excel file
-
         String filePath = "C:\\Users\\Prefme_Matrix\\OneDrive\\Documents";
-
-        //Call read file method of the class to read data
-
-        objExcelFile.readExcel(filePath,"ExportExcel.xlsx","Sheet1");
-
+        objExcelFile.readExcel(filePath, "ExportExcel.xlsx", "Sheet1");
     }
-
 }
